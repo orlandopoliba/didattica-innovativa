@@ -1,0 +1,38 @@
+.reveal .slides section .regression-slide { min-height: 620px; height: calc(100svh - 32px); padding: 0 32px; }
+.regression-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; min-height: 0; }
+.regression-panel { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 0 24px; gap: 10px; }
+.regression-panel + .regression-panel { border-left: 1px solid var(--line); }
+.regression-slide h2 { text-align: center; font-size: 19px; }
+.regression-equation { text-align: center; font-size: clamp(14px, 1.45vw, 21px); min-height: 30px; }
+.regression-plot { position: relative; flex: 1; min-height: 200px; }
+.regression-slide canvas { display: block; width: 100%; height: 100%; touch-action: none; outline-offset: 2px; border-radius: 6px; }
+.regression-slide canvas:focus-visible { outline: 2px solid var(--blue); }
+#reg-scatter { cursor: crosshair; }
+#reg-surface { cursor: grab; }
+#reg-surface:active { cursor: grabbing; }
+.regression-controls { display: grid; gap: 2px; }
+.regression-controls label { display: flex; align-items: center; gap: 12px; height: 40px; }
+.regression-controls input { width: 100%; touch-action: none; }
+.regression-controls output { width: 4.5em; flex-shrink: 0; text-align: right; font-size: 16px; }
+.regression-slide button { align-self: center; min-height: 44px; padding: 9px 26px; }
+#reg-optimize { background: var(--blue); color: white; border-color: var(--blue); }
+.regression-loss { justify-content: flex-start; }
+#reg-mse { display: flex; justify-content: center; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 58px; }
+.regression-surface-wrap { position: relative; flex: 1; min-height: 280px; }
+.reg-axis { position: absolute; pointer-events: none; font-size: 15px; transform: translate(-50%, -50%); }
+.reg-x { right: 2px; bottom: 9px; }
+.reg-y { left: 12px; top: 3px; }
+.reveal .slides .regression-hint { text-align: center; color: var(--muted); font-size: 12px; margin: 0; line-height: 1.5; }
+.reveal .slides #reg-status { text-align: center; font-size: 13px; line-height: 1.4; min-height: 36px; margin: 0; color: var(--muted); }
+.regression-footer { display: flex; justify-content: center; padding: 16px 0; }
+@media (max-width: 760px) {
+  .reveal .slides section .regression-slide { height: auto; min-height: 0; padding: 0 16px; }
+  .regression-slide .slide-header { min-height: 84px; }
+  .regression-panels { grid-template-columns: 1fr; gap: 24px; }
+  .regression-panel { padding: 0; }
+  .regression-panel + .regression-panel { border-left: 0; border-top: 1px solid var(--line); padding-top: 22px; }
+  .regression-plot { flex: none; height: 260px; }
+  .regression-surface-wrap { flex: none; height: 330px; }
+  .regression-equation { font-size: 16px; }
+  #reg-mse { font-size: clamp(12px, 3.5vw, 16px); }
+}

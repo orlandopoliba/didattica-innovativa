@@ -1,0 +1,89 @@
+/* Use actual viewport dimensions instead of shrinking a desktop canvas. */
+.reveal { --body-text-size: clamp(18px, 1.8vw, 25px); font-family: inherit; font-size: 18px; color: #273447; }
+.reveal .slides { inset: 0; width: 100%; height: 100%; margin: 0; text-align: left; }
+.reveal .slides > section,
+.reveal .slides > section > section {
+  width: 100%; height: 100%; padding: 0 0 64px;
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+}
+.reveal .slides > section.stack { padding: 0; overflow: hidden; }
+.reveal .slides section .slide { height: calc(100svh - 64px); min-height: 706px; }
+.reveal .slides section:not(.stack):not(:has(.slide)) {
+  padding: clamp(32px, 8vw, 120px); padding-top: clamp(24px, 3vw, 48px); padding-bottom: 90px;
+  overflow-wrap: anywhere;
+  font-size: var(--body-text-size);
+  line-height: 1.5;
+}
+.reveal .slides section:not(:has(.slide)) h1 { font-size: clamp(28px, 3.2vw, 46px); max-width: 1100px; line-height: 1.2; }
+.reveal .slides section:not(:has(.slide)) h2 { font-size: clamp(24px, 2.6vw, 36px); text-align: left; }
+.reveal .slides section:not(:has(.slide)) p,
+.reveal .slides section:not(:has(.slide)) li { font-size: var(--body-text-size); line-height: 1.5; }
+.reveal .slides .centered-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 24px;
+  width: min(100%, 48rem);
+  margin: 2rem auto;
+  text-align: center;
+  font-family: inherit;
+  font-size: var(--body-text-size);
+  line-height: 1.5;
+}
+.reveal .slides .grid-column { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.reveal .slides .flushright { text-align: right; }
+.reveal .slides img { max-width: 100%; height: auto; }
+/* Coding agent figure: an outer box holding the LLM and harness boxes. */
+.reveal .slides .agent-figure {
+  width: min(100%, 52rem); margin: 1.5rem auto; padding: 0.6rem 1.25rem 1.25rem;
+  border: 2px solid #273447; border-radius: 16px;
+}
+.reveal .slides .agent-label { margin-bottom: 0.6rem; text-align: center; font-weight: 700; }
+.reveal .slides .agent-parts { display: flex; align-items: stretch; gap: 1rem; }
+.reveal .slides .agent-box { flex: 1; padding: 0.6rem 1rem; border: 2px solid; border-radius: 12px; background: #f7f8fa; }
+.reveal .slides .agent-box-label { margin-bottom: 0.4rem; text-align: center; font-weight: 700; }
+.reveal .slides .agent-plus { align-self: center; font-size: 1.6em; font-weight: 700; }
+.reveal .slides .logo-list { margin: 0; padding: 0; list-style: none; }
+.reveal .slides .logo-list li { display: flex; align-items: center; gap: 0.6rem; margin: 0.25rem 0; }
+.reveal .slides .logo-list img { width: 1.3em; height: 1.3em; flex: none; margin: 0; }
+.reveal .slides .logo-list a { display: flex; align-items: center; gap: 0.6rem; color: inherit; text-decoration: none; }
+.reveal .slides .logo-list a:hover { text-decoration: underline; }
+.reveal .slides .agent-notes { display: grid; gap: 0.5rem; width: min(100%, 52rem); margin: 0 auto; }
+@media (max-width: 760px) {
+  .reveal .slides .agent-parts { flex-direction: column; }
+}
+/* Code blocks: the <pre> is the scroll box, kept inside the slide. */
+.reveal .slides pre {
+  width: 100%; max-height: calc(100svh - 260px); margin: 0;
+  overflow: auto; overscroll-behavior: contain;
+  border-radius: 8px; background: #272822;
+  font-size: clamp(11px, 0.9vw, 14px); line-height: 1.45;
+}
+.reveal .slides pre code.hljs { max-height: none; padding: 12px 16px; font-size: inherit; }
+.reveal .slides .code-tabs pre { max-height: calc(100svh - 400px); border-top-left-radius: 0; }
+.reveal .slides .code-tabs pre[hidden] { display: none; }
+.reveal .slides .code-tabs-bar { display: flex; gap: 4px; }
+.reveal .slides .code-tabs-bar button {
+  min-height: 0; padding: 6px 14px; border: 0; border-radius: 8px 8px 0 0;
+  font: inherit; font-size: clamp(12px, 0.9vw, 15px);
+  color: #c9c9c0; background: #3e3d32; cursor: pointer;
+}
+.reveal .slides .code-tabs-bar button[aria-selected="true"] { color: #fff; background: #272822; }
+.reveal .controls { color: var(--blue); bottom: 10px; background: #f7f8faf2; border-radius: 12px; }
+.reveal .controls button { min-height: 0; padding: 0; }
+.reveal .progress { color: var(--blue); }
+#loading { position: fixed; top: 12px; left: 24px; right: 24px; z-index: 20; background: #f7f8fa; }
+/* Scroll view uses full-width pages, without shrinking the interactive charts.
+   Long slides scroll internally, then hand scrolling back to the presentation. */
+.reveal-scroll .reveal .scroll-page section {
+  width: 100% !important; height: 100% !important;
+  top: 0 !important; left: 0 !important; transform: none !important;
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: auto;
+  padding-bottom: 32px;
+}
+.reveal-scroll .reveal .slides section .slide { height: auto; min-height: 0; }
+.reveal-scroll .reveal .scroll-page-content { overflow: visible; }
+.reveal-scroll .reveal .scroll-page { scroll-snap-stop: always; }
+@media (max-width: 760px) {
+  .reveal .slides section .slide { height: auto; min-height: 0; }
+  .reveal .slides section:not(.stack):not(:has(.slide)) { padding: 48px 24px 100px; }
+}
