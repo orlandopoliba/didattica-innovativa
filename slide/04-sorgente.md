@@ -4,13 +4,13 @@
 
 <div class="code-tabs">
 
-```html [12-22] src=slide/02-tlc.md
+```html [12-22] src=/slide/02-tlc.md
 ```
 
-```css [65-80] src=styles.css
+```css [65-80] src=/styles.css
 ```
 
-```js [103-137] src=app.js
+```js [103-137] src=/app.js
 ```
 
 </div>
