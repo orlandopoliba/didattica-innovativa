@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regressione lineare (con Pi + beam)</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 20px;
+      background: #fff;
+      color: #222;
+    }
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { text-align: center; margin: 0 0 16px; }
+    .subtitle { text-align: center; font-size: 0.9em; margin: 0; opacity: 0.8; }
+    .slide-content {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .panel {
+      flex: 1;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .plot {
+      width: 100%;
+      height: 360px;
+    }
+    .formula { width: 100%; text-align: center; min-height: 44px; }
+    .controls {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+      padding: 6px;
+    }
+    .slider-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      height: 34px;
+    }
+    .slider-row label { width: 24px; text-align: center; font-weight: bold; }
+    .slider-row input[type="range"] {
+      flex: 1;
+      max-width: 220px;
+      height: 14px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #cfd8dc;
+      border-radius: 9px;
+      outline: none;
+    }
+    .slider-row input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: #b0bec5;
+      border-radius: 4px;
+    }
+    .slider-row input[type="range"]::-moz-range-track {
+      height: 6px;
+      background: #b0bec5;
+      border-radius: 4px;
+    }
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #1f77b4;
+      border: 2px solid #fff;
+      margin-top: -5px;
+      cursor: pointer;
+    }
+    .slider-row input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #1f77b4;
+      border: 0;
+      cursor: pointer;
+    }
+    .slider-row .val { width: 48px; text-align: right; font-size: 1em; }
+    .btn {
+      padding: 8px 18px;
+      border: 1px solid #333;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.9em;
+      border-radius: 4px;
+    }
+    .btn:hover { background: #eee; }
+    .reset-wrap { margin-top: 24px; text-align: center; }
+    @media (max-width: 768px) {
+      .slide-content { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Regressione lineare (con Pi + beam)</h1>
+    <div class="slide-content">
+      <div class="panel">
+        <h3 class="subtitle">scatterplot</h3>
+        <div id="plot2d" class="plot"></div>
+        <div class="controls">
+          <div class="slider-row">
+            <label>a</label>
+            <input id="sliderA" type="range" min="-10" max="10" step="0.1" value="0" />
+            <span id="valA" class="val">0.0</span>
+          </div>
+          <div class="slider-row">
+            <label>b</label>
+            <input id="sliderB" type="range" min="-10" max="10" step="0.1" value="5" />
+            <span id="valB" class="val">5.0</span>
+          </div>
+          <button id="optimizeBtn" class="btn">Ottimizza</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div id="mseFormula" class="formula"></div>
+        <div id="plot3d" class="plot"></div>
+      </div>
+    </div>
+    <div class="reset-wrap">
+      <button id="resetBtn" class="btn">Reset</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+  <script>
+    const defaultPoints = [
+      { x: 1, y: 2.3 },
+      { x: 2, y: 4.1 },
+      { x: 3, y: 5.8 },
+      { x: 4, y: 7.7 },
+      { x: 5, y: 9.4 }
+    ];
+
+    let points = defaultPoints.map(p => ({ ...p }));
+    let a = 0;
+    let b = 5;
+
+    function fit(points) {
+      const n = points.length;
+      if (n === 0) return { a: 0, b: 0 };
+      let sx = 0, sy = 0, sxx = 0, sxy = 0;
+      for (const p of points) { sx += p.x; sy += p.y; sxx += p.x * p.x; sxy += p.x * p.y; }
+      const denom = n * sxx - sx * sx;
+      if (Math.abs(denom) < 1e-12) return { a: 0, b: sy / n };
+      const aa = (n * sxy - sx * sy) / denom;
+      const bb = (sy - aa * sx) / n;
+      return { a: aa, b: bb };
+    }
+
+    function mse(points, a, b) {
+      if (points.length === 0) return 0;
+      let s = 0;
+      for (const p of points) { const r = a * p.x + b - p.y; s += r * r; }
+      return s / points.length;
+    }
+
+    function resetState() {
+      points = defaultPoints.map(p => ({ ...p }));
+      a = 0;
+      b = 5;
+      document.getElementById('sliderA').value = 0;
+      document.getElementById('sliderB').value = 5;
+    }
+
+    let plot2dReady = false;
+    let plot3dReady = false;
+
+    function update2D() {
+      const xs = points.map(p => p.x);
+      const ys = points.map(p => p.y);
+      const errX = [];
+      const errY = [];
+      for (const p of points) { errX.push(p.x, p.x, null); errY.push(p.y, a * p.x + b, null); }
+      let minX = Math.min(...xs);
+      let maxX = Math.max(...xs);
+      if (!isFinite(minX)) { minX = -1; maxX = 1; }
+      if (minX === maxX) { minX -= 1; maxX += 1; }
+      const pad = (maxX - minX) * 0.1 || 1;
+      const lineX = [minX - pad, maxX + pad];
+      const lineY = lineX.map(x => a * x + b);
+      const xRange = [minX - pad, maxX + pad];
+      const yMin = Math.min(...ys), yMax = Math.max(...ys);
+      const yPad = Math.max(1, (yMax - yMin) * 0.2);
+      const yRange = [yMin - yPad, yMax + yPad];
+
+      const traces = [
+        { x: errX, y: errY, mode: 'lines', type: 'scatter', line: { color: '#888', width: 1, dash: 'dot' }, hoverinfo: 'skip', showlegend: false, name: 'errori' },
+        { x: xs, y: ys, mode: 'markers', type: 'scatter', marker: { size: 9, color: '#1f77b4' } },
+        { x: lineX, y: lineY, mode: 'lines', type: 'scatter', line: { color: '#d62728', width: 3 } }
+      ];
+      const layout = { height: 360, margin: { l: 40, r: 20, t: 10, b: 40 }, xaxis: { title: 'x', range: xRange }, yaxis: { title: 'y', range: yRange }, showlegend: false };
+
+      if (!plot2dReady) {
+        Plotly.newPlot('plot2d', traces, layout, { responsive: true, displayModeBar: false });
+        plot2dReady = true;
+        document.getElementById('plot2d').addEventListener('click', onPlot2dClick);
+      } else {
+        Plotly.react('plot2d', traces, layout);
+      }
+    }
+
+    function onPlot2dClick(ev) {
+      const e = (ev && ev.event) ? ev.event : ev;
+      if (!e) return;
+      const gd = document.getElementById('plot2d');
+      const fl = gd._fullLayout;
+      if (!fl) return;
+      const bb = gd.getBoundingClientRect();
+      const localX = e.clientX - bb.left;
+      const localY = e.clientY - bb.top;
+      const xa = fl.xaxis;
+      const ya = fl.yaxis;
+
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
+        const rangeX = xa.range[1] - xa.range[0];
+        const rangeY = ya.range[1] - ya.range[0];
+        const px = xa._offset + (p.x - xa.range[0]) / rangeX * xa._length;
+        const py = ya._offset + (ya.range[1] - p.y) / rangeY * ya._length;
+        if (Math.hypot(px - localX, py - localY) < 14) {
+          points.splice(i, 1);
+          updateAll();
+          return;
+        }
+      }
+
+      let x, y;
+      try {
+        x = xa.p2c(localX - xa._offset);
+        y = ya.p2c(localY - ya._offset);
+      } catch (err) {
+        if (ev.points && ev.points.length) { x = ev.points[0].x; y = ev.points[0].y; } else return;
+      }
+      if (!isFinite(x) || !isFinite(y)) return;
+      points.push({ x: parseFloat(x.toFixed(3)), y: parseFloat(y.toFixed(3)) });
+      updateAll();
+    }
+
+    function update3D() {
+      const opt = fit(points);
+      const aMin = -10, aMax = 10, bMin = -10, bMax = 10;
+
+      const nGrid = 26;
+      const xs = [];
+      const ys = [];
+      for (let i = 0; i < nGrid; i++) {
+        xs.push(aMin + (aMax - aMin) * i / (nGrid - 1));
+        ys.push(bMin + (bMax - bMin) * i / (nGrid - 1));
+      }
+      const z = [];
+      for (let i = 0; i < ys.length; i++) {
+        const row = [];
+        for (let j = 0; j < xs.length; j++) row.push(mse(points, xs[j], ys[i]));
+        z.push(row);
+      }
+
+      let maxZ = 0;
+      for (const row of z) for (const v of row) if (v > maxZ) maxZ = v;
+      let fixedMaxZ = 0;
+      const fixedN = 17;
+      for (let i = 0; i < fixedN; i++) {
+        for (let j = 0; j < fixedN; j++) {
+          const aa = -10 + 20 * i / (fixedN - 1);
+          const bbv = -10 + 20 * j / (fixedN - 1);
+          const m = mse(points, aa, bbv);
+          if (m > fixedMaxZ) fixedMaxZ = m;
+        }
+      }
+      const curMSE = mse(points, a, b);
+      const traces = [
+        { type: 'surface', x: xs, y: ys, z: z, colorscale: 'Viridis', showscale: false },
+        { type: 'scatter3d', x: [a], y: [b], z: [curMSE], mode: 'markers', marker: { size: 6, color: 'red' } }
+      ];
+      const layout = { uirevision: 'keep-camera', height: 360, margin: { l: 0, r: 0, t: 0, b: 0 }, scene: { xaxis: { title: 'a', range: [-10, 10] }, yaxis: { title: 'b', range: [-10, 10] }, zaxis: { title: 'MSE', range: [0, Math.max(1, fixedMaxZ * 1.1)] } }, showlegend: false };
+
+      if (!plot3dReady) {
+        Plotly.newPlot('plot3d', traces, layout, { responsive: true, displayModeBar: false });
+        plot3dReady = true;
+      } else {
+        Plotly.react('plot3d', traces, layout);
+      }
+    }
+
+    function updateFormula() {
+      const val = mse(points, a, b);
+      const el = document.getElementById('mseFormula');
+      const tex = 'MSE(a,b)=\\frac{1}{n}\\sum_{i=1}^n (a x_i + b - y_i)^2 = ' + val.toFixed(4);
+      try { katex.render(tex, el, { displayMode: true, throwOnError: false }); }
+      catch (e) { el.textContent = tex; }
+    }
+
+    function updateAll() {
+      document.getElementById('valA').textContent = a.toFixed(1);
+      document.getElementById('valB').textContent = b.toFixed(1);
+      document.getElementById('sliderA').value = a;
+      document.getElementById('sliderB').value = b;
+      update2D();
+      update3D();
+      updateFormula();
+    }
+
+    document.getElementById('sliderA').addEventListener('input', e => { a = parseFloat(e.target.value); updateAll(); });
+    document.getElementById('sliderB').addEventListener('input', e => { b = parseFloat(e.target.value); updateAll(); });
+    document.getElementById('optimizeBtn').addEventListener('click', () => {
+      const sol = fit(points);
+      a = Math.max(-10, Math.min(10, sol.a));
+      b = Math.max(-10, Math.min(10, sol.b));
+      updateAll();
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => { resetState(); updateAll(); });
+
+    resetState();
+    updateAll();
+  </script>
+</body>
+</html>
